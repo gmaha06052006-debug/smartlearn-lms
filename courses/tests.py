@@ -65,3 +65,31 @@ class CoursesTestCase(TestCase):
         response = client.get(reverse('course_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Full-Stack Mastery')
+
+    def test_engineering_courses_view(self):
+        """Test engineering courses curated view."""
+        client = Client()
+        response = client.get(reverse('engineering_courses'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Full-Stack Mastery')
+
+    def test_toggle_lesson_progress_ajax(self):
+        """Test toggling progress via AJAX endpoint."""
+        client = Client()
+        client.login(username='learner@smartlearn.com', password='testpassword123')
+        Enrollment.objects.create(student=self.student, course=self.course)
+
+        # Toggle lesson 1 complete
+        url = reverse('toggle_lesson_progress', kwargs={'lesson_id': self.lesson1.id})
+        response = client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['completed'])
+        self.assertEqual(data['progress_percent'], 50)
+
+        # Toggle lesson 1 back to incomplete
+        response = client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data['completed'])
+        self.assertEqual(data['progress_percent'], 0)

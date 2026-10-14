@@ -100,27 +100,41 @@
         <!-- Enrollment Action Box -->
         <div class="card card-premium mb-4 sticky-top" style="top: 90px; z-index: 10;">
             {% if is_enrolled %}
-                <div class="p-2 mb-3 rounded-3" style="background-color: var(--sl-accent-light);">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-check-circle-fill text-success"></i>
-                        <span class="fw-bold small">You are enrolled in this course</span>
+                <div class="p-3 mb-3 rounded-3" style="background-color: var(--sl-accent-light); border: 1px solid rgba(199, 255, 74, 0.4);">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            {% if enrollment.progress_percent == 100 %}
+                                <i class="bi bi-patch-check-fill text-success fs-5"></i>
+                                <span class="fw-bold small">Course Completed!</span>
+                            {% else %}
+                                <i class="bi bi-pie-chart-fill text-dark fs-5"></i>
+                                <span class="fw-bold small">Course Progress</span>
+                            {% endif %}
+                        </div>
+                        <span class="badge-pill-accent fw-bold" style="font-size: 0.8rem;">{{ enrollment.progress_percent }}%</span>
                     </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Course Progress</span>
-                        <strong class="text-dark">{{ enrollment.progress_percent }}%</strong>
+                    <div class="sl-progress mb-2" style="height: 7px;">
+                        <div class="sl-progress-bar {% if enrollment.progress_percent == 100 %}bg-success{% else %}sl-progress-bar-accent{% endif %}" style="width: {{ enrollment.progress_percent }}%;"></div>
                     </div>
-                    <div class="sl-progress">
-                        <div class="sl-progress-bar" style="width: {{ enrollment.progress_percent }}%;"></div>
+                    <div class="d-flex justify-content-between text-muted" style="font-size: 0.75rem;">
+                        <span>{{ enrollment.completed_lessons_count }} of {{ course.total_lessons }} lessons completed</span>
+                        {% if enrollment.completed_at %}
+                            <span class="text-success fw-semibold"><i class="bi bi-award me-1"></i>Certified</span>
+                        {% endif %}
                     </div>
                 </div>
 
-                {% with first_lesson=course.modules.first.lessons.first %}
-                    {% if first_lesson %}
-                    <a href="{% url 'lesson_view' course_slug=course.slug lesson_id=first_lesson.id %}" class="btn btn-accent w-100 justify-content-center py-2 mb-2">
+                {% if next_lesson_to_study %}
+                <a href="{% url 'lesson_view' course_slug=course.slug lesson_id=next_lesson_to_study.id %}" class="btn btn-accent w-100 justify-content-center py-2 mb-2">
+                    {% if enrollment.progress_percent == 100 %}
+                        Review Curriculum <i class="bi bi-arrow-repeat ms-1"></i>
+                    {% elif enrollment.progress_percent > 0 %}
                         Continue Learning <i class="bi bi-arrow-right ms-1"></i>
-                    </a>
+                    {% else %}
+                        Start First Lesson <i class="bi bi-play-fill ms-1"></i>
                     {% endif %}
-                {% endwith %}
+                </a>
+                {% endif %}
             {% else %}
                 <h5 class="fw-bold mb-2">Start Learning Today</h5>
                 <p class="text-secondary small mb-4">Enroll now to access lessons, code exercises, quizzes, and earn your certificate.</p>

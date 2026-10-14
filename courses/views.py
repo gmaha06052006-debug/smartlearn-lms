@@ -13,7 +13,7 @@ from analytics.models import LearningActivity
 def student_dashboard_view(request):
     """Main student dashboard replicating the placed-ai-main-2 portal UI."""
     user = request.user
-    enrollments = Enrollment.objects.filter(student=user, is_active=True).select_related('course')
+    enrollments = Enrollment.objects.filter(student=user, is_active=True).select_related('course', 'course__category', 'course__instructor')
     
     # Calculate stats
     enrolled_count = enrollments.count()
@@ -28,8 +28,8 @@ def student_dashboard_view(request):
     # Recent activities
     activities = LearningActivity.objects.filter(student=user).order_by('-created_at')[:6]
 
-    # In-progress courses
-    active_courses = enrollments.order_by('-enrolled_at')[:4]
+    # In-progress courses (prioritize active, non-completed or recent)
+    active_courses = enrollments.order_by('-enrolled_at')[:6]
 
     context = {
         'page_title': 'Student Dashboard',
@@ -44,8 +44,8 @@ def student_dashboard_view(request):
 
 
 def course_list_view(request):
-    """Catalog of all published courses with search and filtering."""
-    courses = Course.objects.filter(is_published=True).select_related('category', 'instructor')
+    """Catalog of all published courses with search, filtering, and student progress tracking."""
+    courses = Course.objects.filter(is_published=True).select_related('category', 'instructor').prefetch_related('modules__lessons')
     categories = CourseCategory.objects.annotate(course_count=Count('courses'))
 
     search_query = request.GET.get('q', '').strip()
@@ -56,8 +56,10 @@ def course_list_view(request):
         courses = courses.filter(
             Q(title__icontains=search_query) |
             Q(description__icontains=search_query) |
+            Q(short_description__icontains=search_query) |
             Q(instructor__first_name__icontains=search_query) |
-            Q(instructor__last_name__icontains=search_query)
+            Q(instructor__last_name__icontains=search_query) |
+            Q(category__name__icontains=search_query)
         )
 
     if category_slug:
@@ -66,21 +68,83 @@ def course_list_view(request):
     if difficulty:
         courses = courses.filter(difficulty=difficulty)
 
-    # Check user enrollments
+    # Check user enrollments and progress
     enrolled_course_ids = set()
+    user_enrollments = {}
     if request.user.is_authenticated:
-        enrolled_course_ids = set(
-            Enrollment.objects.filter(student=request.user, is_active=True).values_list('course_id', flat=True)
-        )
+        enrollments = Enrollment.objects.filter(student=request.user, is_active=True).select_related('course')
+        for enr in enrollments:
+            enrolled_course_ids.add(enr.course_id)
+            user_enrollments[enr.course_id] = enr
+
+    for course in courses:
+        course.user_enrollment = user_enrollments.get(course.id)
 
     context = {
-        'page_title': 'Explore Courses',
+        'page_title': 'Course Catalog',
         'courses': courses,
         'categories': categories,
         'search_query': search_query,
         'selected_category': category_slug,
         'selected_difficulty': difficulty,
         'enrolled_course_ids': enrolled_course_ids,
+        'user_enrollments': user_enrollments,
+    }
+    return render(request, 'courses/list.html', context)
+
+
+def engineering_courses_view(request):
+    """Curated showcase of top engineering courses across all engineering disciplines."""
+    engineering_categories = CourseCategory.objects.filter(
+        Q(name__icontains='Engineering') | 
+        Q(name__icontains='Computer Science') |
+        Q(name__icontains='AI & Machine Learning') |
+        Q(slug__icontains='engineering')
+    )
+    
+    courses = Course.objects.filter(
+        is_published=True,
+        category__in=engineering_categories
+    ).select_related('category', 'instructor').prefetch_related('modules__lessons').order_by('category__name', '-estimated_hours')
+
+    search_query = request.GET.get('q', '').strip()
+    category_slug = request.GET.get('category', '').strip()
+    difficulty = request.GET.get('difficulty', '').strip()
+
+    if search_query:
+        courses = courses.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(short_description__icontains=search_query)
+        )
+    if category_slug:
+        courses = courses.filter(category__slug=category_slug)
+    if difficulty:
+        courses = courses.filter(difficulty=difficulty)
+
+    enrolled_course_ids = set()
+    user_enrollments = {}
+    if request.user.is_authenticated:
+        enrollments = Enrollment.objects.filter(student=request.user, is_active=True).select_related('course')
+        for enr in enrollments:
+            enrolled_course_ids.add(enr.course_id)
+            user_enrollments[enr.course_id] = enr
+
+    for course in courses:
+        course.user_enrollment = user_enrollments.get(course.id)
+
+    context = {
+        'page_title': 'Top Engineering Disciplines & Courses',
+        'header_title': 'Top Engineering Curriculums',
+        'header_subtitle': 'Comprehensive academic curriculums designed to international engineering standards (Mechanical, Electrical, Civil, Robotics, Aerospace, Chemical, and Computer Systems).',
+        'courses': courses,
+        'categories': engineering_categories,
+        'search_query': search_query,
+        'selected_category': category_slug,
+        'selected_difficulty': difficulty,
+        'enrolled_course_ids': enrolled_course_ids,
+        'user_enrollments': user_enrollments,
+        'is_engineering_view': True,
     }
     return render(request, 'courses/list.html', context)
 
@@ -100,6 +164,8 @@ def course_detail_view(request, slug):
         enrollment = Enrollment.objects.filter(student=request.user, course=course, is_active=True).first()
         is_enrolled = enrollment is not None
         if is_enrolled:
+            # Ensure progress is accurate upon viewing
+            enrollment.recalculate_progress()
             completed_lesson_ids = set(
                 LessonProgress.objects.filter(
                     student=request.user,
@@ -108,12 +174,26 @@ def course_detail_view(request, slug):
                 ).values_list('lesson_id', flat=True)
             )
 
+            next_lesson_to_study = None
+            for mod in course.modules.all():
+                for les in mod.lessons.all():
+                    if les.id not in completed_lesson_ids:
+                        next_lesson_to_study = les
+                        break
+                if next_lesson_to_study:
+                    break
+            if not next_lesson_to_study and course.modules.exists():
+                first_mod = course.modules.first()
+                if first_mod and first_mod.lessons.exists():
+                    next_lesson_to_study = first_mod.lessons.first()
+
     context = {
         'page_title': course.title,
         'course': course,
         'is_enrolled': is_enrolled,
         'enrollment': enrollment,
         'completed_lesson_ids': completed_lesson_ids,
+        'next_lesson_to_study': next_lesson_to_study if is_enrolled else None,
     }
     return render(request, 'courses/detail.html', context)
 
@@ -132,6 +212,9 @@ def enroll_course_view(request, slug):
     if not created and not enrollment.is_active:
         enrollment.is_active = True
         enrollment.save()
+
+    # Recalculate to sync state
+    enrollment.recalculate_progress()
 
     # Log activity
     LearningActivity.objects.create(
@@ -184,6 +267,10 @@ def lesson_view(request, course_slug, lesson_id):
 
     modules = course.modules.prefetch_related('lessons').all()
 
+    # Update enrollment progress
+    if enrollment:
+        enrollment.recalculate_progress()
+
     context = {
         'page_title': f"{lesson.title} - {course.title}",
         'course': course,
@@ -209,10 +296,11 @@ def toggle_lesson_progress_view(request, lesson_id):
     progress.completed_at = timezone.now() if progress.completed else None
     progress.save()
 
-    # Recalculate enrollment progress
+    # Recalculate enrollment progress accurately
     enrollment = Enrollment.objects.filter(student=request.user, course=lesson.course).first()
+    new_progress = 0
     if enrollment:
-        enrollment.recalculate_progress()
+        new_progress = enrollment.recalculate_progress()
 
     if progress.completed:
         LearningActivity.objects.create(
@@ -221,11 +309,11 @@ def toggle_lesson_progress_view(request, lesson_id):
             description=f"Completed lesson: {lesson.title}"
         )
 
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('format') == 'json':
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('format') == 'json' or request.method == 'POST':
         return JsonResponse({
             'status': 'ok',
             'completed': progress.completed,
-            'progress_percent': enrollment.progress_percent if enrollment else 0,
+            'progress_percent': new_progress,
         })
 
     next_url = request.POST.get('next') or request.GET.get('next')

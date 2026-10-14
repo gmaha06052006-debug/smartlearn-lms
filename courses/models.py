@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from django.utils import timezone
 
 
 class CourseCategory(models.Model):
@@ -145,6 +146,8 @@ class Enrollment(models.Model):
         total = self.course.total_lessons
         if total == 0:
             self.progress_percent = 100
+            if not self.completed_at:
+                self.completed_at = timezone.now()
         else:
             completed = LessonProgress.objects.filter(
                 student=self.student,
@@ -152,8 +155,21 @@ class Enrollment(models.Model):
                 completed=True
             ).count()
             self.progress_percent = min(100, int((completed / total) * 100))
+            if self.progress_percent >= 100:
+                if not self.completed_at:
+                    self.completed_at = timezone.now()
+            else:
+                self.completed_at = None
         self.save(update_fields=['progress_percent', 'completed_at'])
         return self.progress_percent
+
+    @property
+    def completed_lessons_count(self):
+        return LessonProgress.objects.filter(
+            student=self.student,
+            lesson__module__course=self.course,
+            completed=True
+        ).count()
 
 
 class LessonProgress(models.Model):

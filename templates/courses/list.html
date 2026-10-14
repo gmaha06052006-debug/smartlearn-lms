@@ -1,14 +1,21 @@
 {% extends 'base.html' %}
 
-{% block title %}Explore Courses — SmartLearn{% endblock %}
+{% block title %}{{ page_title|default:"Explore Courses" }} — SmartLearn{% endblock %}
 
 {% block content %}
-<!-- Header & Filters -->
+<!-- Header & Quick Mode Tabs -->
 <div class="mb-4">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
         <div>
-            <h2 class="fw-bold mb-1">Course Catalog</h2>
-            <p class="text-secondary small mb-0">Browse specialized paths and upgrade your expertise with hands-on curriculums.</p>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h2 class="fw-bold mb-0">{{ header_title|default:"Course Catalog" }}</h2>
+                {% if is_engineering_view %}
+                    <span class="badge-pill-accent"><i class="bi bi-gear-wide-connected me-1"></i>Engineering Hub</span>
+                {% endif %}
+            </div>
+            <p class="text-secondary small mb-0">
+                {{ header_subtitle|default:"Explore rigorous engineering curricula, modular lessons, and real-time completion tracking." }}
+            </p>
         </div>
 
         <!-- Search Bar -->
@@ -27,17 +34,32 @@
         </form>
     </div>
 
-    <!-- Category Filter Chips -->
-    <div class="d-flex flex-wrap gap-2 pt-2 border-top">
-        <a href="{% url 'course_list' %}" class="btn {% if not selected_category %}btn-dark-pill{% else %}btn-outline-pill{% endif %} btn-sm">
-            All Categories
-        </a>
-        {% for cat in categories %}
-        <a href="?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_difficulty %}&difficulty={{ selected_difficulty }}{% endif %}" 
-           class="btn {% if selected_category == cat.slug %}btn-dark-pill{% else %}btn-outline-pill{% endif %} btn-sm">
-            <i class="bi {{ cat.icon }} me-1"></i> {{ cat.name }} ({{ cat.course_count }})
-        </a>
-        {% endfor %}
+    <!-- Hub Switcher & Filter Chips -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top">
+        <!-- View Toggle Pills -->
+        <div class="d-flex gap-2">
+            <a href="{% url 'course_list' %}" class="btn {% if not is_engineering_view %}btn-dark-pill{% else %}btn-outline-pill{% endif %} btn-sm">
+                <i class="bi bi-grid me-1"></i> All Courses
+            </a>
+            <a href="{% url 'engineering_courses' %}" class="btn {% if is_engineering_view %}btn-dark-pill{% else %}btn-outline-pill{% endif %} btn-sm">
+                <i class="bi bi-cpu me-1"></i> Top Engineering Disciplines
+            </a>
+        </div>
+
+        <!-- Category Filter Chips -->
+        <div class="d-flex flex-wrap gap-2">
+            {% if not is_engineering_view %}
+            <a href="{% url 'course_list' %}" class="btn {% if not selected_category %}btn-dark-pill{% else %}btn-outline-pill{% endif %} btn-sm">
+                All Categories
+            </a>
+            {% endif %}
+            {% for cat in categories %}
+            <a href="?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_difficulty %}&difficulty={{ selected_difficulty }}{% endif %}" 
+               class="btn {% if selected_category == cat.slug %}btn-dark-pill{% else %}btn-outline-pill{% endif %} btn-sm">
+                <i class="bi {{ cat.icon }} me-1"></i> {{ cat.name }} ({{ cat.courses.count }})
+            </a>
+            {% endfor %}
+        </div>
     </div>
 </div>
 
@@ -46,42 +68,86 @@
 <div class="row g-4">
     {% for course in courses %}
     <div class="col-md-6 col-xl-4">
-        <div class="card card-premium h-100 d-flex flex-column position-relative">
+        <div class="card card-premium h-100 d-flex flex-column position-relative shadow-sm border-0" style="transition: transform 0.2s, box-shadow 0.2s;">
             <!-- Category & Difficulty Badges -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <span class="badge-pill-soft text-uppercase" style="font-size: 0.7rem;">
-                    {{ course.category.name|default:"General" }}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge-pill-soft text-uppercase fw-semibold" style="font-size: 0.675rem;">
+                    <i class="bi {{ course.category.icon|default:'bi-folder' }} me-1"></i> {{ course.category.name|default:"General" }}
                 </span>
-                <span class="badge rounded-pill {% if course.difficulty == 'beginner' %}bg-success-subtle text-success{% elif course.difficulty == 'intermediate' %}bg-warning-subtle text-warning{% else %}bg-danger-subtle text-danger{% endif %} text-capitalize" style="font-size: 0.7rem;">
+                <span class="badge rounded-pill {% if course.difficulty == 'beginner' %}bg-success-subtle text-success{% elif course.difficulty == 'intermediate' %}bg-warning-subtle text-warning{% else %}bg-danger-subtle text-danger{% endif %} text-capitalize" style="font-size: 0.675rem;">
                     {{ course.difficulty }}
                 </span>
             </div>
 
             <!-- Title & Short Description -->
             <h5 class="fw-bold mb-2">
-                <a href="{% url 'course_detail' slug=course.slug %}" class="text-dark stretched-link">
+                <a href="{% url 'course_detail' slug=course.slug %}" class="text-dark stretched-link text-decoration-none">
                     {{ course.title }}
                 </a>
             </h5>
-            <p class="text-secondary small mb-4 flex-grow-1" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+            <p class="text-secondary small mb-3 flex-grow-1" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;">
                 {{ course.short_description|default:course.description }}
             </p>
 
-            <!-- Metadata & CTA -->
+            <!-- Curricular Metrics -->
+            <div class="d-flex align-items-center gap-3 text-muted small mb-3">
+                <span><i class="bi bi-collection-play me-1"></i>{{ course.modules.count }} Modules</span>
+                <span><i class="bi bi-file-text me-1"></i>{{ course.total_lessons }} Lessons</span>
+                <span><i class="bi bi-clock me-1"></i>{{ course.estimated_hours }}h</span>
+            </div>
+
+            <!-- Course Progress Bar (If Enrolled) -->
+            {% if course.user_enrollment %}
+            <div class="p-2 mb-3 rounded-2" style="background-color: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.06);">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-semibold" style="font-size: 0.75rem;">
+                        {% if course.user_enrollment.progress_percent == 100 %}
+                            <i class="bi bi-patch-check-fill text-success me-1"></i> Completed
+                        {% else %}
+                            <i class="bi bi-hourglass-split text-primary me-1"></i> In Progress
+                        {% endif %}
+                    </span>
+                    <span class="badge-pill-accent py-0 px-2 fw-bold" style="font-size: 0.7rem;">
+                        {{ course.user_enrollment.progress_percent }}%
+                    </span>
+                </div>
+                <div class="sl-progress" style="height: 6px;">
+                    <div class="sl-progress-bar {% if course.user_enrollment.progress_percent == 100 %}bg-success{% else %}sl-progress-bar-accent{% endif %}" 
+                         style="width: {{ course.user_enrollment.progress_percent }}%;"></div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Instructor Metadata & Action Indicator -->
             <div class="border-top pt-3 mt-auto d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
                     <div class="sl-user-avatar" style="width: 28px; height: 28px; font-size: 0.7rem;">
                         {{ course.instructor.first_name|first|default:"I" }}
                     </div>
-                    <small class="text-muted text-truncate" style="max-width: 120px;">
+                    <small class="text-muted text-truncate" style="max-width: 130px;">
                         {{ course.instructor.get_full_name|default:course.instructor.username }}
                     </small>
                 </div>
 
-                <div class="d-flex align-items-center gap-3 text-secondary small">
-                    <span><i class="bi bi-clock me-1"></i>{{ course.estimated_hours }}h</span>
-                    {% if course.id in enrolled_course_ids %}
-                        <span class="badge-pill-accent" style="font-size: 0.65rem;">Enrolled</span>
+                <div>
+                    {% if course.user_enrollment %}
+                        {% if course.user_enrollment.progress_percent == 100 %}
+                            <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                <i class="bi bi-check2"></i> Completed
+                            </span>
+                        {% elif course.user_enrollment.progress_percent > 0 %}
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                Continue ({{ course.user_enrollment.progress_percent }}%)
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                Enrolled (0%)
+                            </span>
+                        {% endif %}
+                    {% else %}
+                        <span class="small text-dark fw-semibold" style="font-size: 0.75rem;">
+                            View Curriculum <i class="bi bi-arrow-right"></i>
+                        </span>
                     {% endif %}
                 </div>
             </div>

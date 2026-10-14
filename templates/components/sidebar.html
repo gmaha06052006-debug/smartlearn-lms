@@ -25,6 +25,12 @@
                 <span>Courses</span>
             </a>
         </li>
+        <li class="sl-nav-item">
+            <a href="{% url 'engineering_courses' %}" class="sl-nav-link {% if '/engineering/' in request.path %}active{% endif %}">
+                <i class="bi bi-cpu"></i>
+                <span>Engineering Hub</span>
+            </a>
+        </li>
 
         <div class="sl-nav-section-title">Assessments</div>
         <li class="sl-nav-item">

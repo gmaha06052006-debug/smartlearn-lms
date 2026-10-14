@@ -13,8 +13,11 @@
         <p class="text-secondary small mb-0">Track your courses, upcoming assignments, and personalized recommendations.</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{% url 'engineering_courses' %}" class="btn btn-outline-pill">
+            <i class="bi bi-cpu"></i> Engineering Hub
+        </a>
         <a href="{% url 'course_list' %}" class="btn btn-accent">
-            <i class="bi bi-compass"></i> Explore Courses
+            <i class="bi bi-compass"></i> Explore All Courses
         </a>
     </div>
 </div>
