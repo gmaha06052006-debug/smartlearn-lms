@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign In — SmartLearn{% endblock %}
+
+{% block layout %}
+<div class="sl-auth-container">
+    <!-- Brand / Hero Showcase Side -->
+    <div class="sl-auth-brand-side">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <div class="sl-brand-logo">SL</div>
+                <h4 class="m-0 text-white fw-bold">SmartLearn</h4>
+            </div>
+            <span class="badge-pill-accent mb-3">Next-Gen LMS</span>
+            <h2 class="text-white display-6 fw-bold mt-2" style="line-height: 1.2;">
+                Master Skills with <br><span style="color: var(--sl-accent);">Intelligent</span> Learning.
+            </h2>
+            <p class="text-white-50 mt-3" style="max-width: 400px; font-size: 0.95rem;">
+                Personalized study paths, automated assessment grading, interactive quizzes, and real-time skill analytics.
+            </p>
+        </div>
+
+        <div class="mt-4">
+            <div class="d-flex flex-column gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="background: rgba(199,255,74,0.15); color: var(--sl-accent); width: 36px; height: 36px;">
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </div>
+                    <span class="text-white-50 small">Industry-crafted curriculum & interactive video lessons</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="background: rgba(199,255,74,0.15); color: var(--sl-accent); width: 36px; height: 36px;">
+                        <i class="bi bi-cpu-fill"></i>
+                    </div>
+                    <span class="text-white-50 small">Smart recommendation engine powered by student progress</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="background: rgba(199,255,74,0.15); color: var(--sl-accent); width: 36px; height: 36px;">
+                        <i class="bi bi-award-fill"></i>
+                    </div>
+                    <span class="text-white-50 small">Instant quiz scoring and automated feedback loop</span>
+                </div>
+            </div>
+            <div class="border-top border-secondary opacity-25 my-4"></div>
+            <small class="text-white-50">&copy; 2026 SmartLearn Platform. All rights reserved.</small>
+        </div>
+    </div>
+
+    <!-- Auth Form Side -->
+    <div class="sl-auth-form-side">
+        <div class="sl-auth-card">
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-3 small py-2 px-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close small" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="card card-premium p-4 p-sm-5 border-0 shadow-sm" style="border-radius: 20px;">
+                <h3 class="fw-bold mb-1">Welcome back</h3>
+                <p class="text-secondary small mb-4">Enter your credentials to access your portal</p>
+
+                <form method="POST" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label small fw-semibold text-secondary">Email address</label>
+                        {{ form.username }}
+                    </div>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="id_password" class="form-label small fw-semibold text-secondary mb-0">Password</label>
+                            <a href="#" class="small text-muted text-decoration-none">Forgot password?</a>
+                        </div>
+                        {{ form.password }}
+                    </div>
+
+                    <button type="submit" class="btn btn-dark-pill w-100 justify-content-center py-2 mb-3">
+                        Sign In <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </form>
+
+                <div class="text-center pt-2">
+                    <p class="small text-secondary mb-0">
+                        Don't have an account? 
+                        <a href="{% url 'register' %}" class="fw-bold text-dark text-decoration-underline ms-1">Create one</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock layout %}

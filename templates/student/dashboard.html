@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard — SmartLearn{% endblock %}
+
+{% block content %}
+<!-- Greeting & Quick Status Banner -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h2 class="fw-bold mb-0">Welcome back, {{ user.first_name|default:user.username }}!</h2>
+            <span class="badge-pill-accent">Student</span>
+        </div>
+        <p class="text-secondary small mb-0">Track your courses, upcoming assignments, and personalized recommendations.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'course_list' %}" class="btn btn-accent">
+            <i class="bi bi-compass"></i> Explore Courses
+        </a>
+    </div>
+</div>
+
+<!-- Key Stat Cards Grid -->
+<div class="row g-3 mb-4">
+    <!-- Enrolled Courses -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="sl-stat-card">
+            <div class="sl-stat-icon-wrapper">
+                <i class="bi bi-book"></i>
+            </div>
+            <div class="sl-stat-value">{{ enrolled_count }}</div>
+            <div class="sl-stat-label">Enrolled Courses</div>
+            <div class="mt-3">
+                <div class="sl-progress">
+                    <div class="sl-progress-bar" style="width: {% if enrolled_count %}75%{% else %}0%{% endif %};"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Lessons -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="sl-stat-card">
+            <div class="sl-stat-icon-wrapper" style="background-color: rgba(46, 155, 89, 0.15); color: var(--sl-success);">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div class="sl-stat-value">{{ completed_lessons_count }}</div>
+            <div class="sl-stat-label">Lessons Completed</div>
+            <div class="mt-3">
+                <span class="badge-pill-soft text-success">
+                    <i class="bi bi-arrow-up-right"></i> Actively learning
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Progress -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="sl-stat-card">
+            <div class="sl-stat-icon-wrapper" style="background-color: rgba(33, 150, 243, 0.15); color: var(--sl-info);">
+                <i class="bi bi-pie-chart"></i>
+            </div>
+            <div class="sl-stat-value">{{ overall_progress }}%</div>
+            <div class="sl-stat-label">Overall Completion</div>
+            <div class="mt-3">
+                <div class="sl-progress">
+                    <div class="sl-progress-bar sl-progress-bar-accent" style="width: {{ overall_progress }}%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Courses -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="sl-stat-card">
+            <div class="sl-stat-icon-wrapper" style="background-color: rgba(244, 180, 0, 0.15); color: var(--sl-warning);">
+                <i class="bi bi-trophy"></i>
+            </div>
+            <div class="sl-stat-value">{{ completed_courses_count }}</div>
+            <div class="sl-stat-label">Completed Courses</div>
+            <div class="mt-3">
+                <span class="badge-pill-soft">
+                    <i class="bi bi-patch-check"></i> Certified skills
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Dashboard Content Split -->
+<div class="row g-4">
+    <!-- Left Column: In Progress Courses & Activities -->
+    <div class="col-lg-8">
+        <!-- In-Progress Courses Section -->
+        <div class="card card-premium mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">In-Progress Courses</h5>
+                <a href="{% url 'course_list' %}" class="small text-secondary fw-semibold">View All</a>
+            </div>
+
+            {% if active_courses %}
+                <div class="row g-3">
+                    {% for enrollment in active_courses %}
+                    <div class="col-md-6">
+                        <div class="card p-3 h-100 border rounded-3 bg-light-subtle">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge-pill-soft text-uppercase" style="font-size: 0.675rem;">
+                                    {{ enrollment.course.category.name|default:"General" }}
+                                </span>
+                                <span class="badge-pill-accent" style="font-size: 0.675rem;">
+                                    {{ enrollment.progress_percent }}%
+                                </span>
+                            </div>
+                            <h6 class="fw-bold mb-1 text-truncate">{{ enrollment.course.title }}</h6>
+                            <small class="text-secondary mb-3 d-block">
+                                <i class="bi bi-person me-1"></i> {{ enrollment.course.instructor.get_full_name|default:enrollment.course.instructor.username }}
+                            </small>
+
+                            <div class="mt-auto">
+                                <div class="sl-progress mb-3">
+                                    <div class="sl-progress-bar" style="width: {{ enrollment.progress_percent }}%;"></div>
+                                </div>
+                                <a href="{% url 'course_detail' slug=enrollment.course.slug %}" class="btn btn-outline-pill btn-sm w-100 justify-content-center">
+                                    Continue Learning <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="sl-stat-icon-wrapper mx-auto mb-3" style="width: 56px; height: 56px;">
+                        <i class="bi bi-journal-plus fs-3"></i>
+                    </div>
+                    <h6 class="fw-bold mb-1">No enrolled courses yet</h6>
+                    <p class="text-secondary small mb-3">Explore our curated catalog and start expanding your skills today.</p>
+                    <a href="{% url 'course_list' %}" class="btn btn-accent btn-sm">Browse Courses</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="card card-premium">
+            <h5 class="fw-bold mb-3">Recent Activity</h5>
+            {% if activities %}
+                <div class="d-flex flex-column gap-3">
+                    {% for act in activities %}
+                    <div class="d-flex align-items-center justify-content-between p-2 rounded-2 hover-bg">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: rgba(0,0,0,0.04);">
+                                {% if act.activity_type == 'enrollment' %}
+                                    <i class="bi bi-book text-primary"></i>
+                                {% elif act.activity_type == 'lesson_completed' %}
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                {% elif act.activity_type == 'quiz_attempt' %}
+                                    <i class="bi bi-question-diamond text-warning"></i>
+                                {% elif act.activity_type == 'assignment_submit' %}
+                                    <i class="bi bi-file-earmark-arrow-up text-info"></i>
+                                {% else %}
+                                    <i class="bi bi-clock-history"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="d-block fw-semibold small">{{ act.description }}</span>
+                                <small class="text-muted">{{ act.created_at|timesince }} ago</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-secondary small mb-0">No recent activity logged. Start a lesson to see updates here!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Recommendations & Fast Actions -->
+    <div class="col-lg-4">
+        <!-- Intelligent Learning Assistant Card -->
+        <div class="card card-dark mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-stars" style="color: var(--sl-accent);"></i>
+                <h6 class="fw-bold text-white mb-0">Smart Recommendations</h6>
+            </div>
+            <p class="text-white-50 small mb-3">Personalized suggestions to maximize your study retention.</p>
+
+            <a href="{% url 'recommendation_list' %}" class="btn btn-accent btn-sm w-100 justify-content-center">
+                View Recommendations <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <!-- Quick Links Card -->
+        <div class="card card-premium">
+            <h6 class="fw-bold mb-3">Quick Navigation</h6>
+            <div class="d-flex flex-column gap-2">
+                <a href="{% url 'assignment_list' %}" class="d-flex align-items-center justify-content-between p-2 rounded text-decoration-none border">
+                    <span class="small fw-semibold"><i class="bi bi-file-earmark-check me-2 text-secondary"></i>Assignments</span>
+                    <i class="bi bi-chevron-right text-muted small"></i>
+                </a>
+                <a href="{% url 'quiz_list' %}" class="d-flex align-items-center justify-content-between p-2 rounded text-decoration-none border">
+                    <span class="small fw-semibold"><i class="bi bi-question-diamond me-2 text-secondary"></i>Quizzes & Tests</span>
+                    <i class="bi bi-chevron-right text-muted small"></i>
+                </a>
+                <a href="{% url 'analytics_dashboard' %}" class="d-flex align-items-center justify-content-between p-2 rounded text-decoration-none border">
+                    <span class="small fw-semibold"><i class="bi bi-graph-up me-2 text-secondary"></i>Analytics Dashboard</span>
+                    <i class="bi bi-chevron-right text-muted small"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

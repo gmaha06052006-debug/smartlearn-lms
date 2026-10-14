@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Quizzes & Tests — SmartLearn{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Quizzes & Knowledge Checks</h2>
+        <p class="text-secondary small mb-0">Timed assessments and concept tests with immediate grading and review.</p>
+    </div>
+</div>
+
+{% if quizzes %}
+<div class="row g-4">
+    {% for quiz in quizzes %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card card-premium h-100 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="badge-pill-soft text-uppercase" style="font-size: 0.675rem;">
+                    {{ quiz.course.title|truncatechars:22 }}
+                </span>
+                <span class="badge bg-primary-subtle text-primary rounded-pill" style="font-size: 0.675rem;">
+                    Pass: {{ quiz.pass_score }}%
+                </span>
+            </div>
+
+            <h5 class="fw-bold mb-2">
+                <a href="{% url 'quiz_start' pk=quiz.pk %}" class="text-dark">
+                    {{ quiz.title }}
+                </a>
+            </h5>
+            <p class="text-secondary small mb-4 flex-grow-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                {{ quiz.description|default:"Test your understanding of core course modules." }}
+            </p>
+
+            <div class="border-top pt-3 mt-auto">
+                <div class="d-flex justify-content-between align-items-center small text-secondary mb-3">
+                    <span><i class="bi bi-clock me-1"></i> {{ quiz.duration_minutes }} Mins</span>
+                    <span><i class="bi bi-patch-question me-1"></i> {{ quiz.total_questions }} Questions</span>
+                    <span><i class="bi bi-arrow-repeat me-1"></i> Max {{ quiz.max_attempts }} tries</span>
+                </div>
+
+                <a href="{% url 'quiz_start' pk=quiz.pk %}" class="btn btn-accent btn-sm w-100 justify-content-center">
+                    Start Quiz <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card card-premium text-center py-5">
+    <div class="sl-stat-icon-wrapper mx-auto mb-3" style="width: 56px; height: 56px;">
+        <i class="bi bi-question-diamond fs-3"></i>
+    </div>
+    <h5 class="fw-bold mb-1">No quizzes available</h5>
+    <p class="text-secondary small mb-0">Quizzes will appear here as your instructors publish assessments.</p>
+</div>
+{% endif %}
+{% endblock content %}

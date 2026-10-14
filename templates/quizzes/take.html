@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Taking Quiz: {{ quiz.title }} — SmartLearn{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <span class="badge-pill-soft text-uppercase" style="font-size: 0.7rem;">{{ quiz.course.title }}</span>
+        <h3 class="fw-bold mb-0 mt-1">{{ quiz.title }}</h3>
+    </div>
+
+    <!-- Live Timer Badge -->
+    {% if quiz.duration_minutes > 0 %}
+    <div class="card p-2 px-3 border shadow-sm rounded-pill d-inline-flex flex-row align-items-center gap-2 bg-white">
+        <i class="bi bi-stopwatch text-danger fs-5"></i>
+        <span class="small fw-semibold text-secondary">Remaining:</span>
+        <span id="quizCountdown" class="fs-5 fw-bold font-monospace" data-seconds="{{ remaining_seconds }}">
+            --:--
+        </span>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <form id="quizForm" method="POST" action="{% url 'quiz_submit' attempt_id=attempt.id %}">
+            {% csrf_token %}
+
+            <div class="d-flex flex-column gap-4 mb-4">
+                {% for q in questions %}
+                <div class="card card-premium">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge-pill-soft" style="font-size: 0.75rem;">Question {{ forloop.counter }} of {{ questions.count }}</span>
+                        <span class="text-muted small">{{ q.points }} pt{{ q.points|pluralize }}</span>
+                    </div>
+
+                    <h5 class="fw-bold mb-4" style="line-height: 1.5;">{{ q.text }}</h5>
+
+                    <div class="d-flex flex-column gap-2">
+                        {% for opt in q.options.all %}
+                        <label class="form-check p-3 border rounded-3 d-flex align-items-center gap-3 cursor-pointer hover-bg m-0" style="background-color: #FFFFFF;">
+                            <input class="form-check-input ms-0 mt-0" type="radio" name="question_{{ q.id }}" value="{{ opt.id }}" {% if saved_answers|default:None and saved_answers|default:'' == opt.id %}checked{% endif %}>
+                            <span class="fw-medium text-dark">{{ opt.text }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="card card-premium text-center py-4">
+                    <p class="text-secondary mb-0">No questions found in this quiz.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center p-3 card card-premium flex-row">
+                <span class="text-secondary small">Review your answers carefully before submitting.</span>
+                <button type="submit" class="btn btn-accent px-4 py-2">
+                    Submit Quiz <i class="bi bi-check2-circle ms-1"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'js/quiz-timer.js' %}"></script>
+{% endblock %}

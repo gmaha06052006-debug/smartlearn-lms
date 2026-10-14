@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Assignment — SmartLearn{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-premium">
+            <h3 class="fw-bold mb-1">Create New Assignment</h3>
+            <p class="text-secondary small mb-4">Set deliverables, due date, and point values for enrolled students</p>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary">Target Course</label>
+                    {{ form.course }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary">Assignment Title</label>
+                    {{ form.title }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary">Instructions / Requirements</label>
+                    {{ form.description }}
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary">Due Date & Time</label>
+                        {{ form.due_date }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary">Maximum Score</label>
+                        {{ form.max_score }}
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-semibold text-secondary">Starter File Attachment (Optional)</label>
+                    {{ form.attachment }}
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'assignment_list' %}" class="btn btn-outline-pill">Cancel</a>
+                    <button type="submit" class="btn btn-accent px-4">Publish Assignment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

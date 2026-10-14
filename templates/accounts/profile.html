@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile — SmartLearn{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card card-premium text-center">
+            <div class="sl-user-avatar mx-auto mb-3" style="width: 84px; height: 84px; font-size: 2rem;">
+                {{ user.profile.initials|default:"U" }}
+            </div>
+            <h4 class="fw-bold mb-1">{{ user.get_full_name|default:user.username }}</h4>
+            <p class="text-secondary small mb-2">{{ user.email }}</p>
+            <div>
+                <span class="badge-pill-accent text-uppercase">{{ user.profile.get_role_display }}</span>
+            </div>
+
+            <div class="border-top my-4"></div>
+
+            <div class="text-start">
+                <div class="mb-3">
+                    <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Department</small>
+                    <span class="fw-medium">{{ user.profile.department|default:"Not specified" }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Student ID</small>
+                    <span class="fw-medium">{{ user.profile.student_id|default:"Pending assignment" }}</span>
+                </div>
+                <div>
+                    <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Joined</small>
+                    <span class="fw-medium">{{ user.date_joined|date:"F d, Y" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card card-premium">
+            <h4 class="fw-bold mb-1">Edit Profile Details</h4>
+            <p class="text-secondary small mb-4">Manage your public information and educational details</p>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary">First Name</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary">Last Name</label>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary">Email Address</label>
+                    {{ form.email }}
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary">Phone Number</label>
+                        {{ form.phone }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary">Department / Major</label>
+                        {{ form.department }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary">Bio / About Me</label>
+                    {{ form.bio }}
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary">Date of Birth</label>
+                        {{ form.date_of_birth }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary">Profile Avatar</label>
+                        {{ form.avatar }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="submit" class="btn btn-accent px-4">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

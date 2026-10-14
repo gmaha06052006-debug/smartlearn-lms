@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ assignment.title }} — SmartLearn{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'assignment_list' %}" class="small text-secondary text-decoration-none d-inline-flex align-items-center gap-1 mb-1">
+        <i class="bi bi-arrow-left"></i> Back to Assignments
+    </a>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <h2 class="fw-bold mb-0">{{ assignment.title }}</h2>
+        <span class="badge-pill-accent text-uppercase">{{ assignment.course.title }}</span>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Assignment Brief -->
+    <div class="col-lg-7">
+        <div class="card card-premium mb-4">
+            <h5 class="fw-bold mb-3">Instructions & Requirements</h5>
+            <div class="text-secondary mb-4" style="line-height: 1.8;">
+                {{ assignment.description|linebreaks }}
+            </div>
+
+            {% if assignment.attachment %}
+            <div class="p-3 border rounded-3 bg-light-subtle d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-paperclip fs-4 text-dark"></i>
+                    <div>
+                        <span class="fw-semibold d-block small">Project Starter / Attachment</span>
+                        <small class="text-muted">Provided by instructor</small>
+                    </div>
+                </div>
+                <a href="{{ assignment.attachment.url }}" class="btn btn-dark-pill btn-sm" download>
+                    Download <i class="bi bi-download ms-1"></i>
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="border-top pt-3 mt-4 d-flex justify-content-between text-secondary small">
+                <span><i class="bi bi-calendar3 me-1"></i> Deadline: <strong>{{ assignment.due_date|date:"F d, Y @ H:i" }}</strong></span>
+                <span><i class="bi bi-trophy me-1"></i> Maximum: <strong>{{ assignment.max_score }} Points</strong></span>
+            </div>
+        </div>
+
+        <!-- Faculty Submissions Table (if faculty or admin) -->
+        {% if all_submissions %}
+        <div class="card card-premium">
+            <h5 class="fw-bold mb-3">Student Submissions ({{ all_submissions.count }})</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr class="small text-uppercase">
+                            <th>Student</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th>Score</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in all_submissions %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ sub.student.get_full_name|default:sub.student.username }}</div>
+                                <small class="text-muted">{{ sub.student.email }}</small>
+                            </td>
+                            <td class="small">{{ sub.submitted_at|date:"M d, H:i" }}</td>
+                            <td>
+                                {% if sub.status == 'graded' %}
+                                    <span class="badge bg-success-subtle text-success rounded-pill">Graded</span>
+                                {% else %}
+                                    <span class="badge bg-warning-subtle text-warning rounded-pill">Needs Review</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if sub.score is not None %}
+                                    <strong>{{ sub.score }}</strong> / {{ assignment.max_score }}
+                                {% else %}
+                                    <span class="text-muted">&mdash;</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'assignment_grade' submission_id=sub.id %}" class="btn btn-sm btn-dark-pill">
+                                    Grade <i class="bi bi-pencil-square ms-1"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Student Submission Card -->
+    {% if user.profile.is_student %}
+    <div class="col-lg-5">
+        <div class="card card-premium">
+            <h5 class="fw-bold mb-1">Your Submission</h5>
+            <p class="text-secondary small mb-4">Upload your completed solution or source archive</p>
+
+            {% if submission %}
+                <div class="p-3 border rounded-3 bg-light-subtle mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge rounded-pill {% if submission.status == 'graded' %}bg-success text-white{% else %}bg-warning text-dark{% endif %} text-uppercase" style="font-size: 0.7rem;">
+                            {{ submission.status }}
+                        </span>
+                        <small class="text-muted">{{ submission.submitted_at|date:"M d, Y @ H:i" }}</small>
+                    </div>
+
+                    {% if submission.score is not None %}
+                    <div class="my-3 p-3 bg-white rounded border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold">Your Score:</span>
+                            <span class="fs-5 fw-bold text-success">{{ submission.score }} / {{ assignment.max_score }}</span>
+                        </div>
+                        {% if submission.feedback %}
+                        <div class="mt-2 pt-2 border-top small text-secondary">
+                            <strong>Instructor Feedback:</strong><br>
+                            {{ submission.feedback }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex align-items-center justify-content-between mt-2">
+                        <small class="text-truncate" style="max-width: 180px;">{{ submission.file.name }}</small>
+                        <a href="{{ submission.file.url }}" class="btn btn-outline-pill btn-sm" download>Download File</a>
+                    </div>
+                </div>
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary">Upload File (PDF, DOCX, ZIP)</label>
+                    {{ form.file }}
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-semibold text-secondary">Submission Notes</label>
+                    {{ form.notes }}
+                </div>
+
+                <button type="submit" class="btn btn-accent w-100 justify-content-center py-2">
+                    <i class="bi bi-cloud-arrow-up"></i> {% if submission %}Resubmit Assignment{% else %}Turn In Assignment{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}

@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications & Announcements — SmartLearn{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Notifications & Broadcasts</h2>
+        <p class="text-secondary small mb-0">Stay updated on institutional announcements and course updates.</p>
+    </div>
+    <a href="{% url 'mark_all_notifications_read' %}" class="btn btn-outline-pill btn-sm">
+        <i class="bi bi-check2-all me-1"></i> Mark All as Read
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Notifications List -->
+    <div class="col-lg-8">
+        <div class="card card-premium">
+            <h5 class="fw-bold mb-3">Your Alerts</h5>
+
+            {% if notifications %}
+            <div class="d-flex flex-column gap-2">
+                {% for notif in notifications %}
+                <div class="p-3 border rounded-3 d-flex align-items-center justify-content-between {% if not notif.is_read %}bg-light-subtle border-start border-4 border-dark{% else %}bg-white{% endif %}">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: rgba(0,0,0,0.05);">
+                            <i class="bi bi-bell text-dark"></i>
+                        </div>
+                        <div>
+                            <span class="fw-semibold d-block small text-dark">{{ notif.title }}</span>
+                            <small class="text-secondary">{{ notif.message }}</small>
+                            <small class="text-muted d-block mt-1">{{ notif.created_at|timesince }} ago</small>
+                        </div>
+                    </div>
+                    {% if not notif.is_read %}
+                    <a href="{% url 'mark_notification_read' pk=notif.id %}" class="btn btn-sm btn-outline-pill">
+                        Mark Read
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <p class="text-secondary small mb-0">No notifications at this time.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Institutional Announcements -->
+    <div class="col-lg-4">
+        <div class="card card-premium">
+            <h5 class="fw-bold mb-3">Broadcasts</h5>
+            {% if announcements %}
+                <div class="d-flex flex-column gap-3">
+                    {% for ann in announcements %}
+                    <div class="p-3 border rounded-3 bg-light-subtle">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge-pill-accent" style="font-size: 0.65rem;">Official</span>
+                            <small class="text-muted">{{ ann.created_at|date:"M d" }}</small>
+                        </div>
+                        <h6 class="fw-bold mb-1">{{ ann.title }}</h6>
+                        <p class="small text-secondary mb-0">{{ ann.content }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-secondary small mb-0">No campus-wide announcements.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

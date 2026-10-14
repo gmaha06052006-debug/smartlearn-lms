@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Explore Courses — SmartLearn{% endblock %}
+
+{% block content %}
+<!-- Header & Filters -->
+<div class="mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+        <div>
+            <h2 class="fw-bold mb-1">Course Catalog</h2>
+            <p class="text-secondary small mb-0">Browse specialized paths and upgrade your expertise with hands-on curriculums.</p>
+        </div>
+
+        <!-- Search Bar -->
+        <form method="GET" class="d-flex gap-2" style="max-width: 380px; width: 100%;">
+            <div class="position-relative flex-grow-1">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                <input type="text" name="q" value="{{ search_query }}" class="form-control sl-input ps-5" placeholder="Search title or instructor..." style="border-radius: 9999px;">
+            </div>
+            {% if selected_category %}
+                <input type="hidden" name="category" value="{{ selected_category }}">
+            {% endif %}
+            {% if selected_difficulty %}
+                <input type="hidden" name="difficulty" value="{{ selected_difficulty }}">
+            {% endif %}
+            <button type="submit" class="btn btn-dark-pill px-3">Search</button>
+        </form>
+    </div>
+
+    <!-- Category Filter Chips -->
+    <div class="d-flex flex-wrap gap-2 pt-2 border-top">
+        <a href="{% url 'course_list' %}" class="btn {% if not selected_category %}btn-dark-pill{% else %}btn-outline-pill{% endif %} btn-sm">
+            All Categories
+        </a>
+        {% for cat in categories %}
+        <a href="?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_difficulty %}&difficulty={{ selected_difficulty }}{% endif %}" 
+           class="btn {% if selected_category == cat.slug %}btn-dark-pill{% else %}btn-outline-pill{% endif %} btn-sm">
+            <i class="bi {{ cat.icon }} me-1"></i> {{ cat.name }} ({{ cat.course_count }})
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Courses Grid -->
+{% if courses %}
+<div class="row g-4">
+    {% for course in courses %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card card-premium h-100 d-flex flex-column position-relative">
+            <!-- Category & Difficulty Badges -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="badge-pill-soft text-uppercase" style="font-size: 0.7rem;">
+                    {{ course.category.name|default:"General" }}
+                </span>
+                <span class="badge rounded-pill {% if course.difficulty == 'beginner' %}bg-success-subtle text-success{% elif course.difficulty == 'intermediate' %}bg-warning-subtle text-warning{% else %}bg-danger-subtle text-danger{% endif %} text-capitalize" style="font-size: 0.7rem;">
+                    {{ course.difficulty }}
+                </span>
+            </div>
+
+            <!-- Title & Short Description -->
+            <h5 class="fw-bold mb-2">
+                <a href="{% url 'course_detail' slug=course.slug %}" class="text-dark stretched-link">
+                    {{ course.title }}
+                </a>
+            </h5>
+            <p class="text-secondary small mb-4 flex-grow-1" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                {{ course.short_description|default:course.description }}
+            </p>
+
+            <!-- Metadata & CTA -->
+            <div class="border-top pt-3 mt-auto d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="sl-user-avatar" style="width: 28px; height: 28px; font-size: 0.7rem;">
+                        {{ course.instructor.first_name|first|default:"I" }}
+                    </div>
+                    <small class="text-muted text-truncate" style="max-width: 120px;">
+                        {{ course.instructor.get_full_name|default:course.instructor.username }}
+                    </small>
+                </div>
+
+                <div class="d-flex align-items-center gap-3 text-secondary small">
+                    <span><i class="bi bi-clock me-1"></i>{{ course.estimated_hours }}h</span>
+                    {% if course.id in enrolled_course_ids %}
+                        <span class="badge-pill-accent" style="font-size: 0.65rem;">Enrolled</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card card-premium text-center py-5">
+    <div class="sl-stat-icon-wrapper mx-auto mb-3" style="width: 60px; height: 60px;">
+        <i class="bi bi-search fs-3"></i>
+    </div>
+    <h5 class="fw-bold mb-1">No courses found</h5>
+    <p class="text-secondary small mb-3">Try adjusting your keyword search or category filters.</p>
+    <a href="{% url 'course_list' %}" class="btn btn-outline-pill btn-sm">Clear Filters</a>
+</div>
+{% endif %}
+{% endblock content %}

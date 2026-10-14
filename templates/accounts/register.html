@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Account — SmartLearn{% endblock %}
+
+{% block layout %}
+<div class="sl-auth-container">
+    <!-- Brand / Hero Showcase Side -->
+    <div class="sl-auth-brand-side">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <div class="sl-brand-logo">SL</div>
+                <h4 class="m-0 text-white fw-bold">SmartLearn</h4>
+            </div>
+            <span class="badge-pill-accent mb-3">Join the Platform</span>
+            <h2 class="text-white display-6 fw-bold mt-2" style="line-height: 1.2;">
+                Start your journey with <br><span style="color: var(--sl-accent);">SmartLearn</span> today.
+            </h2>
+            <p class="text-white-50 mt-3" style="max-width: 400px; font-size: 0.95rem;">
+                Whether you are a student leveling up your career or faculty empowering the next generation.
+            </p>
+        </div>
+
+        <div class="mt-4">
+            <div class="d-flex flex-column gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="background: rgba(199,255,74,0.15); color: var(--sl-accent); width: 36px; height: 36px;">
+                        <i class="bi bi-person-badge-fill"></i>
+                    </div>
+                    <span class="text-white-50 small">Role-based workspaces tailored for students and educators</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="background: rgba(199,255,74,0.15); color: var(--sl-accent); width: 36px; height: 36px;">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <span class="text-white-50 small">Interactive milestone completion and skill progression metrics</span>
+                </div>
+            </div>
+            <div class="border-top border-secondary opacity-25 my-4"></div>
+            <small class="text-white-50">&copy; 2026 SmartLearn Platform. All rights reserved.</small>
+        </div>
+    </div>
+
+    <!-- Auth Form Side -->
+    <div class="sl-auth-form-side">
+        <div class="sl-auth-card">
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-3 small py-2 px-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close small" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="card card-premium p-4 p-sm-5 border-0 shadow-sm" style="border-radius: 20px;">
+                <h3 class="fw-bold mb-1">Create an account</h3>
+                <p class="text-secondary small mb-4">Choose your role and register your credentials</p>
+
+                <form method="POST" action="{% url 'register' %}">
+                    {% csrf_token %}
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary">First Name</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary">Last Name</label>
+                            {{ form.last_name }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Email Address</label>
+                        {{ form.email }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">I am registering as</label>
+                        {{ form.role }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Password</label>
+                        {{ form.password1 }}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold text-secondary">Confirm Password</label>
+                        {{ form.password2 }}
+                    </div>
+
+                    <button type="submit" class="btn btn-dark-pill w-100 justify-content-center py-2 mb-3">
+                        Get Started <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </form>
+
+                <div class="text-center pt-2">
+                    <p class="small text-secondary mb-0">
+                        Already have an account? 
+                        <a href="{% url 'login' %}" class="fw-bold text-dark text-decoration-underline ms-1">Sign in</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock layout %}

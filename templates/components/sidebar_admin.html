@@ -1,0 +1,81 @@
+<aside id="sidebar" class="sl-sidebar sl-sidebar-admin">
+    <!-- Brand -->
+    <a href="{% url 'admin_dashboard' %}" class="sl-sidebar-brand text-decoration-none">
+        <div class="sl-brand-logo">SL</div>
+        <div class="d-flex flex-column">
+            <span class="sl-brand-text text-white">SmartLearn</span>
+            <small class="text-white-50" style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase;">
+                Admin Console
+            </small>
+        </div>
+    </a>
+
+    <!-- Navigation Menu -->
+    <ul class="sl-nav-menu">
+        <div class="sl-nav-section-title text-white-50">Management</div>
+        <li class="sl-nav-item">
+            <a href="{% url 'admin_dashboard' %}" class="sl-nav-link {% if request.path == '/admin-dashboard/' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i>
+                <span>Overview</span>
+            </a>
+        </li>
+        <li class="sl-nav-item">
+            <a href="/admin-panel/auth/user/" target="_blank" class="sl-nav-link">
+                <i class="bi bi-people"></i>
+                <span>Users & Roles</span>
+            </a>
+        </li>
+        <li class="sl-nav-item">
+            <a href="{% url 'course_list' %}" class="sl-nav-link">
+                <i class="bi bi-journals"></i>
+                <span>All Courses</span>
+            </a>
+        </li>
+        <li class="sl-nav-item">
+            <a href="{% url 'assignment_list' %}" class="sl-nav-link">
+                <i class="bi bi-card-checklist"></i>
+                <span>Submissions</span>
+            </a>
+        </li>
+
+        <div class="sl-nav-section-title text-white-50">System</div>
+        <li class="sl-nav-item">
+            <a href="/admin-panel/" target="_blank" class="sl-nav-link">
+                <i class="bi bi-sliders"></i>
+                <span>Django Admin</span>
+            </a>
+        </li>
+        <li class="sl-nav-item">
+            <a href="{% url 'notification_list' %}" class="sl-nav-link">
+                <i class="bi bi-broadcast"></i>
+                <span>Announcements</span>
+            </a>
+        </li>
+        <li class="sl-nav-item">
+            <a href="{% url 'dashboard' %}" class="sl-nav-link">
+                <i class="bi bi-arrow-left-circle"></i>
+                <span>Student View</span>
+            </a>
+        </li>
+    </ul>
+
+    <!-- Sidebar Footer -->
+    <div class="sl-sidebar-footer">
+        <div class="sl-user-card">
+            <div class="sl-user-avatar bg-warning text-dark">
+                AD
+            </div>
+            <div class="d-flex flex-column flex-grow-1 overflow-hidden">
+                <span class="text-truncate fw-semibold text-white" style="font-size: 0.875rem;">
+                    {{ user.get_full_name|default:user.username }}
+                </span>
+                <span class="text-white-50 text-truncate" style="font-size: 0.75rem;">
+                    System Administrator
+                </span>
+            </div>
+            <a href="{% url 'logout' %}" class="text-white-50 p-1 hover-light" title="Logout">
+                <i class="bi bi-box-arrow-right fs-5"></i>
+            </a>
+        </div>
+    </div>
+</aside>

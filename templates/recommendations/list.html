@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Smart Recommendations — SmartLearn{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <div class="d-flex align-items-center gap-2 mb-1">
+        <i class="bi bi-stars fs-3 text-warning"></i>
+        <h2 class="fw-bold mb-0">Smart Recommendations</h2>
+    </div>
+    <p class="text-secondary small mb-0">AI-driven actionable study suggestions designed to optimize learning flow and retention.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        {% if recommendations %}
+        <div class="d-flex flex-column gap-3">
+            {% for rec in recommendations %}
+            <div class="card card-premium d-flex flex-row align-items-center justify-content-between p-4">
+                <div class="d-flex align-items-start gap-3 flex-grow-1 me-3">
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" 
+                         style="background-color: {% if rec.priority == 'high' %}rgba(229,57,53,0.15); color: var(--sl-error);{% elif rec.priority == 'medium' %}rgba(199,255,74,0.3); color: #111111;{% else %}rgba(33,150,243,0.15); color: var(--sl-info);{% endif %} width: 48px; height: 48px;">
+                        <i class="bi {% if rec.priority == 'high' %}bi-alarm{% elif rec.priority == 'medium' %}bi-lightbulb{% else %}bi-check-circle{% endif %} fs-4"></i>
+                    </div>
+
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge rounded-pill {% if rec.priority == 'high' %}bg-danger-subtle text-danger{% elif rec.priority == 'medium' %}bg-warning-subtle text-warning{% else %}bg-primary-subtle text-primary{% endif %} text-uppercase" style="font-size: 0.65rem;">
+                                {{ rec.get_priority_display }}
+                            </span>
+                            {% if rec.course %}
+                                <span class="badge-pill-soft" style="font-size: 0.65rem;">{{ rec.course.title|truncatechars:20 }}</span>
+                            {% endif %}
+                        </div>
+                        <h5 class="fw-bold mb-1">{{ rec.title }}</h5>
+                        <p class="text-secondary small mb-0">{{ rec.reason }}</p>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column gap-2 text-end">
+                    {% if rec.action_url %}
+                    <a href="{{ rec.action_url }}" class="btn btn-accent btn-sm">
+                        Start Now <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'dismiss_recommendation' pk=rec.id %}" class="small text-muted text-decoration-none hover-dark">
+                        Dismiss
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card card-premium text-center py-5">
+            <div class="sl-stat-icon-wrapper mx-auto mb-3" style="width: 56px; height: 56px;">
+                <i class="bi bi-check2-all fs-3"></i>
+            </div>
+            <h5 class="fw-bold mb-1">All Caught Up!</h5>
+            <p class="text-secondary small mb-0">You have completed all pending suggestions. Browse courses to find your next topic.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Sidebar Tips -->
+    <div class="col-lg-4">
+        <div class="card card-dark">
+            <h5 class="fw-bold text-white mb-2">How It Works</h5>
+            <p class="text-white-50 small mb-3">The SmartLearn recommendation engine continuously monitors:</p>
+            <ul class="list-unstyled small text-white-50 d-flex flex-column gap-2 mb-0">
+                <li><i class="bi bi-check-circle-fill text-accent me-2"></i> Unfinished modules across active tracks</li>
+                <li><i class="bi bi-check-circle-fill text-accent me-2"></i> Upcoming assignment submission dates</li>
+                <li><i class="bi bi-check-circle-fill text-accent me-2"></i> Spaced repetition quiz opportunities</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz Results: {{ quiz.title }} — SmartLearn{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Results Scorecard Card -->
+        <div class="card card-premium text-center p-5 mb-4">
+            <div class="mb-3">
+                {% if attempt.is_passed %}
+                    <div class="rounded-circle d-inline-flex p-3 bg-success-subtle text-success mb-2" style="width: 72px; height: 72px; align-items: center; justify-content: center;">
+                        <i class="bi bi-patch-check-fill fs-1"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">Congratulations! You Passed!</h3>
+                    <p class="text-secondary small mb-3">Great job demonstrating mastery over this material.</p>
+                {% else %}
+                    <div class="rounded-circle d-inline-flex p-3 bg-danger-subtle text-danger mb-2" style="width: 72px; height: 72px; align-items: center; justify-content: center;">
+                        <i class="bi bi-x-circle-fill fs-1"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">Needs Improvement</h3>
+                    <p class="text-secondary small mb-3">You scored below the passing mark of {{ quiz.pass_score }}%.</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-center align-items-center gap-4 my-3">
+                <div class="p-3 bg-light-subtle rounded-3 border" style="min-width: 140px;">
+                    <div class="text-muted small text-uppercase fw-semibold">Score</div>
+                    <div class="display-6 fw-bold {% if attempt.is_passed %}text-success{% else %}text-danger{% endif %}">
+                        {{ attempt.score_percent }}%
+                    </div>
+                </div>
+                <div class="p-3 bg-light-subtle rounded-3 border" style="min-width: 140px;">
+                    <div class="text-muted small text-uppercase fw-semibold">Passing Score</div>
+                    <div class="display-6 fw-bold text-dark">{{ quiz.pass_score }}%</div>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-center gap-3">
+                <a href="{% url 'quiz_list' %}" class="btn btn-outline-pill">All Quizzes</a>
+                <a href="{% url 'quiz_start' pk=quiz.pk %}" class="btn btn-dark-pill">Retake Quiz</a>
+            </div>
+        </div>
+
+        <!-- Answers Review Section -->
+        <div class="card card-premium">
+            <h4 class="fw-bold mb-3">Question Breakdown & Explanations</h4>
+            <div class="d-flex flex-column gap-4">
+                {% for q in questions %}
+                <div class="p-3 border rounded-3 bg-light-subtle">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge-pill-soft" style="font-size: 0.725rem;">Question {{ forloop.counter }}</span>
+                    </div>
+                    <h6 class="fw-bold mb-3">{{ q.text }}</h6>
+
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        {% for opt in q.options.all %}
+                        <div class="p-2 px-3 rounded-2 border d-flex align-items-center justify-content-between small
+                            {% if opt.is_correct %}
+                                bg-success-subtle border-success text-success fw-bold
+                            {% elif user_answers|default:None and user_answers|default:'' == opt.id %}
+                                bg-danger-subtle border-danger text-danger
+                            {% else %}
+                                bg-white text-secondary
+                            {% endif %}">
+                            <span>{{ opt.text }}</span>
+                            {% if opt.is_correct %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            {% elif user_answers|default:None and user_answers|default:'' == opt.id %}
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if q.explanation %}
+                    <div class="p-2 px-3 bg-white border rounded text-secondary small">
+                        <strong>Explanation:</strong> {{ q.explanation }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ course.title }} — SmartLearn{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Left Column: Course Overview & Syllabus Accordion -->
+    <div class="col-lg-8">
+        <!-- Hero Header Card -->
+        <div class="card card-premium mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge-pill-soft text-uppercase" style="font-size: 0.725rem;">
+                    {{ course.category.name|default:"General" }}
+                </span>
+                <span class="badge rounded-pill {% if course.difficulty == 'beginner' %}bg-success-subtle text-success{% elif course.difficulty == 'intermediate' %}bg-warning-subtle text-warning{% else %}bg-danger-subtle text-danger{% endif %} text-capitalize" style="font-size: 0.725rem;">
+                    {{ course.difficulty }}
+                </span>
+            </div>
+
+            <h2 class="fw-bold mb-3">{{ course.title }}</h2>
+            <p class="text-secondary mb-4" style="font-size: 1.05rem; line-height: 1.7;">
+                {{ course.description }}
+            </p>
+
+            <div class="d-flex flex-wrap gap-4 pt-3 border-top text-secondary small">
+                <div>
+                    <i class="bi bi-clock me-1 text-dark"></i>
+                    <strong>{{ course.estimated_hours }} Hours</strong> Duration
+                </div>
+                <div>
+                    <i class="bi bi-collection-play me-1 text-dark"></i>
+                    <strong>{{ course.total_lessons }} Lessons</strong>
+                </div>
+                <div>
+                    <i class="bi bi-people me-1 text-dark"></i>
+                    <strong>{{ course.enrolled_students_count }} Students</strong> Enrolled
+                </div>
+            </div>
+        </div>
+
+        <!-- Curriculum Modules Accordion -->
+        <div class="card card-premium">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">Course Syllabus</h4>
+                <small class="text-muted">{{ course.modules.count }} Modules &bull; {{ course.total_lessons }} Lessons</small>
+            </div>
+
+            <div class="accordion accordion-flush" id="syllabusAccordion">
+                {% for module in course.modules.all %}
+                <div class="accordion-item border rounded-3 mb-3 overflow-hidden">
+                    <h2 class="accordion-header" id="heading{{ module.id }}">
+                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} fw-semibold py-3 px-4 bg-light-subtle" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ module.id }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ module.id }}">
+                            <div class="d-flex align-items-center gap-3 w-100 me-3">
+                                <span class="badge-pill-soft" style="font-size: 0.75rem;">Module {{ forloop.counter }}</span>
+                                <span class="text-dark">{{ module.title }}</span>
+                                <span class="ms-auto text-muted small fw-normal">{{ module.lessons.count }} lessons</span>
+                            </div>
+                        </button>
+                    </h2>
+                    <div id="collapse{{ module.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ module.id }}" data-bs-parent="#syllabusAccordion">
+                        <div class="accordion-body p-0">
+                            <ul class="list-group list-group-flush">
+                                {% for lesson in module.lessons.all %}
+                                <li class="list-group-item d-flex align-items-center justify-content-between py-3 px-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        {% if lesson.id in completed_lesson_ids %}
+                                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                        {% else %}
+                                            <i class="bi bi-play-circle text-muted fs-5"></i>
+                                        {% endif %}
+                                        <span class="{% if lesson.id in completed_lesson_ids %}text-muted text-decoration-line-through{% else %}fw-medium{% endif %}">
+                                            {{ lesson.title }}
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ lesson.duration_minutes }} min</small>
+                                        {% if is_enrolled %}
+                                            <a href="{% url 'lesson_view' course_slug=course.slug lesson_id=lesson.id %}" class="btn btn-outline-pill btn-sm">
+                                                Start <i class="bi bi-arrow-right ms-1"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </li>
+                                {% empty %}
+                                <li class="list-group-item text-muted small py-3 px-4">Lessons coming soon.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-secondary small mb-0">No syllabus modules published for this course yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Enrollment Card & Instructor Info -->
+    <div class="col-lg-4">
+        <!-- Enrollment Action Box -->
+        <div class="card card-premium mb-4 sticky-top" style="top: 90px; z-index: 10;">
+            {% if is_enrolled %}
+                <div class="p-2 mb-3 rounded-3" style="background-color: var(--sl-accent-light);">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <span class="fw-bold small">You are enrolled in this course</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Course Progress</span>
+                        <strong class="text-dark">{{ enrollment.progress_percent }}%</strong>
+                    </div>
+                    <div class="sl-progress">
+                        <div class="sl-progress-bar" style="width: {{ enrollment.progress_percent }}%;"></div>
+                    </div>
+                </div>
+
+                {% with first_lesson=course.modules.first.lessons.first %}
+                    {% if first_lesson %}
+                    <a href="{% url 'lesson_view' course_slug=course.slug lesson_id=first_lesson.id %}" class="btn btn-accent w-100 justify-content-center py-2 mb-2">
+                        Continue Learning <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                    {% endif %}
+                {% endwith %}
+            {% else %}
+                <h5 class="fw-bold mb-2">Start Learning Today</h5>
+                <p class="text-secondary small mb-4">Enroll now to access lessons, code exercises, quizzes, and earn your certificate.</p>
+                
+                <a href="{% url 'enroll_course' slug=course.slug %}" class="btn btn-accent w-100 justify-content-center py-2 mb-2">
+                    Enroll for Free <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            {% endif %}
+
+            <div class="border-top pt-3 mt-3">
+                <small class="text-muted d-block mb-2 text-uppercase fw-semibold" style="font-size: 0.7rem;">Course Includes</small>
+                <ul class="list-unstyled small d-flex flex-column gap-2 text-secondary mb-0">
+                    <li><i class="bi bi-camera-video me-2 text-dark"></i> On-demand video lectures</li>
+                    <li><i class="bi bi-file-earmark-arrow-down me-2 text-dark"></i> Downloadable resources & notes</li>
+                    <li><i class="bi bi-patch-question me-2 text-dark"></i> Graded assignments & quizzes</li>
+                    <li><i class="bi bi-infinity me-2 text-dark"></i> Lifetime course access</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Instructor Profile Card -->
+        <div class="card card-premium">
+            <h6 class="fw-bold mb-3">Instructor</h6>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="sl-user-avatar" style="width: 48px; height: 48px; font-size: 1.1rem;">
+                    {{ course.instructor.first_name|first|default:"I" }}
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0">{{ course.instructor.get_full_name|default:course.instructor.username }}</h6>
+                    <small class="text-secondary">{{ course.instructor.profile.department|default:"Faculty Instructor" }}</small>
+                </div>
+            </div>
+            {% if course.instructor.profile.bio %}
+            <p class="text-secondary small mb-0">{{ course.instructor.profile.bio }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

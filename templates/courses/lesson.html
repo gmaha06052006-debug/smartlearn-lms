@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ lesson.title }} — {{ course.title }}{% endblock %}
+
+{% block content %}
+<!-- Back to Course Link & Progress Strip -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <a href="{% url 'course_detail' slug=course.slug %}" class="small text-secondary text-decoration-none d-inline-flex align-items-center gap-1 mb-1">
+            <i class="bi bi-arrow-left"></i> Back to {{ course.title }}
+        </a>
+        <h3 class="fw-bold mb-0">{{ lesson.title }}</h3>
+    </div>
+
+    <!-- Toggle Progress Button -->
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn {% if progress.completed %}btn-accent{% else %}btn-outline-pill{% endif %} js-toggle-lesson-btn"
+                data-url="{% url 'toggle_lesson_progress' lesson_id=lesson.id %}"
+                data-lesson-id="{{ lesson.id }}">
+            {% if progress.completed %}
+                <i class="bi bi-check-circle-fill"></i> Completed
+            {% else %}
+                <i class="bi bi-circle"></i> Mark as Complete
+            {% endif %}
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main Content: Video & Article -->
+    <div class="col-lg-8">
+        <!-- Video Player Container (if video available) -->
+        {% if lesson.video_url %}
+        <div class="card card-premium p-0 overflow-hidden mb-4 border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="ratio ratio-16x9 bg-dark">
+                <iframe src="{{ lesson.video_url }}" title="{{ lesson.title }}" allowfullscreen style="border: 0;"></iframe>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Lesson Text Content / Guide -->
+        <div class="card card-premium mb-4">
+            <h4 class="fw-bold mb-3">Lesson Overview</h4>
+            <div class="lesson-body text-secondary" style="font-size: 1rem; line-height: 1.8;">
+                {{ lesson.content|linebreaks }}
+            </div>
+        </div>
+
+        <!-- Downloadable Materials -->
+        {% if materials %}
+        <div class="card card-premium mb-4">
+            <h5 class="fw-bold mb-3">Lesson Resources & Materials</h5>
+            <div class="d-flex flex-column gap-2">
+                {% for mat in materials %}
+                <div class="d-flex align-items-center justify-content-between p-3 border rounded-3 bg-light-subtle">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-file-earmark-arrow-down fs-4 text-dark"></i>
+                        <div>
+                            <span class="fw-semibold d-block small">{{ mat.title }}</span>
+                            <small class="text-muted text-uppercase">{{ mat.material_type }}</small>
+                        </div>
+                    </div>
+                    {% if mat.file %}
+                        <a href="{{ mat.file.url }}" class="btn btn-dark-pill btn-sm" download>
+                            Download <i class="bi bi-download ms-1"></i>
+                        </a>
+                    {% elif mat.external_url %}
+                        <a href="{{ mat.external_url }}" target="_blank" class="btn btn-outline-pill btn-sm">
+                            Open Link <i class="bi bi-box-arrow-up-right ms-1"></i>
+                        </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Navigation Next / Previous -->
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+            {% if prev_lesson %}
+            <a href="{% url 'lesson_view' course_slug=course.slug lesson_id=prev_lesson.id %}" class="btn btn-outline-pill btn-sm">
+                <i class="bi bi-chevron-left"></i> Previous Lesson
+            </a>
+            {% else %}
+            <div></div>
+            {% endif %}
+
+            {% if next_lesson %}
+            <a href="{% url 'lesson_view' course_slug=course.slug lesson_id=next_lesson.id %}" class="btn btn-dark-pill btn-sm">
+                Next Lesson <i class="bi bi-chevron-right"></i>
+            </a>
+            {% else %}
+            <a href="{% url 'course_detail' slug=course.slug %}" class="btn btn-accent btn-sm">
+                Finish Course <i class="bi bi-check-all"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Drawer: Course Lessons List -->
+    <div class="col-lg-4">
+        <div class="card card-premium sticky-top" style="top: 90px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0">Course Outline</h6>
+                <span class="badge-pill-accent" id="courseProgressText">{{ enrollment.progress_percent|default:0 }}%</span>
+            </div>
+
+            <div class="sl-progress mb-3">
+                <div id="courseProgressBar" class="sl-progress-bar" style="width: {{ enrollment.progress_percent|default:0 }}%;"></div>
+            </div>
+
+            <div class="d-flex flex-column gap-3 overflow-auto" style="max-height: 480px;">
+                {% for mod in modules %}
+                <div>
+                    <small class="text-uppercase text-muted fw-bold d-block mb-2" style="font-size: 0.7rem;">
+                        {{ mod.title }}
+                    </small>
+                    <div class="d-flex flex-column gap-1">
+                        {% for l in mod.lessons.all %}
+                        <a href="{% url 'lesson_view' course_slug=course.slug lesson_id=l.id %}" 
+                           class="d-flex align-items-center justify-content-between p-2 rounded text-decoration-none {% if l.id == lesson.id %}bg-dark text-white{% else %}hover-bg text-secondary{% endif %}"
+                           style="font-size: 0.85rem;">
+                            <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                {% if l.id in completed_ids %}
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                {% else %}
+                                    <i class="bi bi-circle text-muted"></i>
+                                {% endif %}
+                                <span class="text-truncate">{{ l.title }}</span>
+                            </div>
+                            <small class="{% if l.id == lesson.id %}text-white-50{% else %}text-muted{% endif %}">{{ l.duration_minutes }}m</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
