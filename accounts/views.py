@@ -3,6 +3,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
+from django.db import IntegrityError
 
 from .forms import SmartLearnLoginForm, SmartLearnRegisterForm, UserProfileForm
 
@@ -36,10 +37,13 @@ def register_view(request):
     if request.method == 'POST':
         form = SmartLearnRegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, f'Welcome to SmartLearn, {user.first_name}!')
-            return redirect('dashboard')
+            try:
+                user = form.save()
+                login(request, user)
+                messages.success(request, f'Welcome to SmartLearn, {user.first_name}!')
+                return redirect('dashboard')
+            except IntegrityError:
+                messages.error(request, 'An account with this email already exists. Please sign in instead.')
         else:
             for field, errors in form.errors.items():
                 for error in errors:

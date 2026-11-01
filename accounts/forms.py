@@ -90,7 +90,10 @@ class SmartLearnRegisterForm(UserCreationForm):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
+        # Check both email and username (email is used as username)
         if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('An account with this email already exists.')
+        if User.objects.filter(username=email).exists():
             raise forms.ValidationError('An account with this email already exists.')
         return email
 
